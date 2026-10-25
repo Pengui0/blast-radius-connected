@@ -1,0 +1,155 @@
+[
+  {
+    "type": "step",
+    "id": "call_1",
+    "tool": "attack_path",
+    "args": {
+      "target": "axios@0.21.1"
+    }
+  },
+  {
+    "type": "result",
+    "id": "call_1",
+    "tool": "attack_path",
+    "ms": 24.99,
+    "cypher": "MATCH (a:App {id: 'app'}), (p:Package {id: $pkgId})\n    MATCH path = shortestPath((a)-[:DEPENDS_ON*]->(p))\n    RETURN path, length(path) AS depth",
+    "summary": "Found shortest path from App to axios@0.21.1 (1 hop)",
+    "highlight": {
+      "nodes": [
+        "app",
+        "axios@0.21.1"
+      ],
+      "edges": [
+        [
+          "app",
+          "axios@0.21.1"
+        ]
+      ]
+    }
+  },
+  {
+    "type": "step",
+    "id": "call_2",
+    "tool": "attack_path",
+    "args": {
+      "target": "qs@6.7.0"
+    }
+  },
+  {
+    "type": "result",
+    "id": "call_2",
+    "tool": "attack_path",
+    "ms": 18.6,
+    "cypher": "MATCH (a:App {id: 'app'}), (p:Package {id: $pkgId})\n    MATCH path = shortestPath((a)-[:DEPENDS_ON*]->(p))\n    RETURN path, length(path) AS depth",
+    "summary": "Found shortest path from App to qs@6.7.0 (2 hops via express)",
+    "highlight": {
+      "nodes": [
+        "app",
+        "express@4.17.1",
+        "qs@6.7.0"
+      ],
+      "edges": [
+        [
+          "app",
+          "express@4.17.1"
+        ],
+        [
+          "express@4.17.1",
+          "qs@6.7.0"
+        ]
+      ]
+    }
+  },
+  {
+    "type": "step",
+    "id": "call_3",
+    "tool": "blast_radius",
+    "args": {
+      "package": "qs"
+    }
+  },
+  {
+    "type": "result",
+    "id": "call_3",
+    "tool": "blast_radius",
+    "ms": 15.49,
+    "cypher": "MATCH (p:Package)\n    WHERE p.id = $pkg OR p.name = $pkg\n    MATCH path = (p)-[:REQUIRED_BY*0..64]->(upstream:Package)\n    RETURN DISTINCT upstream.id AS id, upstream.name AS name, upstream.version AS version,\n           upstream.direct AS direct, upstream.depth AS depth",
+    "summary": "qs blast radius affects express@4.17.1",
+    "highlight": {
+      "nodes": [
+        "body-parser@1.20.8",
+        "express@4.22.3",
+        "qs@6.16.1",
+        "react-scripts@5.0.1",
+        "webpack-dev-server@4.15.2"
+      ],
+      "edges": [
+        [
+          "body-parser@1.20.8",
+          "express@4.22.3"
+        ],
+        [
+          "express@4.22.3",
+          "webpack-dev-server@4.15.2"
+        ],
+        [
+          "qs@6.16.1",
+          "express@4.22.3"
+        ],
+        [
+          "qs@6.16.1",
+          "body-parser@1.20.8"
+        ],
+        [
+          "webpack-dev-server@4.15.2",
+          "react-scripts@5.0.1"
+        ]
+      ]
+    }
+  },
+  {
+    "type": "final",
+    "markdown": "### \ud83d\udd0d Supply-Chain Attack Path Verification\n\n- **Direct Ingress:** `axios@0.21.1` is directly required by the `App` root (`depth: 1`).\n- **Transitive Hop:** `qs@6.7.0` is pulled in as a secondary dependency of `express@4.17.1` (`depth: 2`).\n- **Contagion Risk:** 4 vulnerabilities in `qs` directly compromise the HTTP body parsing middleware in `express`.\n\n**Concrete Next Action:** Apply `fix:qs` (Override to `6.16.0`).",
+    "evidence": [
+      {
+        "label": "Attack Path: App -> axios@0.21.1",
+        "nodes": [
+          "app",
+          "axios@0.21.1"
+        ],
+        "edges": [
+          [
+            "app",
+            "axios@0.21.1"
+          ]
+        ]
+      },
+      {
+        "label": "Attack Path: App -> express -> qs@6.7.0",
+        "nodes": [
+          "app",
+          "express@4.17.1",
+          "qs@6.7.0"
+        ],
+        "edges": [
+          [
+            "app",
+            "express@4.17.1"
+          ],
+          [
+            "express@4.17.1",
+            "qs@6.7.0"
+          ]
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "label": "Upgrade qs to 6.16.0",
+        "fix_ids": [
+          "fix:qs"
+        ]
+      }
+    ]
+  }
+]

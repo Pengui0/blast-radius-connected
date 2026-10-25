@@ -1,0 +1,195 @@
+@import url("https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&family=Public+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* The old dark UI used the slate scale as dark->light. Inverting it turns the whole app into
+     a light "survey chart" UI (lichen page, mist panels, spruce ink) without touching every class. */
+  --color-slate-50: #12211d; --color-slate-100: #16302b; --color-slate-200: #1e3a33;
+  --color-slate-300: #33493f; --color-slate-400: #435a50; --color-slate-500: #536d62;
+  --color-slate-600: #6f8579; --color-slate-700: #a3b2a5; --color-slate-800: #b4c0b0;
+  --color-slate-900: #e6eadc; --color-slate-950: #dadfd2;
+  --color-white: #12211d;
+
+  /* Accent: spruce (replaces neon cyan/sky/indigo) */
+  --color-cyan-100: #16302b; --color-cyan-200: #1e3a33; --color-cyan-300: #2f6b57;
+  --color-cyan-400: #1f4a3e; --color-cyan-500: #1e3a33; --color-cyan-950: #dce8e0;
+  --color-sky-400: #2f6b57; --color-sky-500: #1e3a33;
+  --color-indigo-300: #2f6b57; --color-indigo-400: #1f4a3e; --color-indigo-500: #1e3a33;
+  --color-teal-400: #1b5e40; --color-teal-500: #17503a;
+  /* Status colours, all dark enough to read as text on the light panels */
+  --color-emerald-300: #1f6b4a; --color-emerald-400: #1b5e40; --color-emerald-500: #17503a;
+  --color-amber-200: #7a4e00; --color-amber-300: #8a5700; --color-amber-400: #7a4e00; --color-amber-500: #6e4500;
+  --color-yellow-400: #7a4e00;
+  --color-orange-300: #b5521b; --color-orange-500: #a34614;
+  --color-rose-200: #8f2a12; --color-rose-300: #b53a1c; --color-rose-400: #b53a1c; --color-rose-500: #a33218;
+  --color-rose-800: #d9a596; --color-rose-950: #f3d9d1;
+
+  /* Square, drafted corners and hard offset shadows instead of soft glass */
+  --radius-md: 0.125rem; --radius-lg: 0.1875rem; --radius-xl: 0.25rem; --radius-2xl: 0.25rem;
+  --shadow-md: 3px 3px 0 rgba(30,58,51,.16); --shadow-lg: 3px 3px 0 rgba(30,58,51,.18);
+  --shadow-xl: 4px 4px 0 rgba(30,58,51,.20); --shadow-2xl: 6px 6px 0 rgba(30,58,51,.26);
+}
+
+:root {
+  color-scheme: light;
+  font-family: "Public Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #dadfd2;
+  color: #12211d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  width: 100%;
+}
+
+html,
+body {
+  margin: 0;
+  overflow-x: clip;
+}
+
+button,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled) {
+  transition:
+    color 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease,
+    transform 120ms ease,
+    filter 120ms ease;
+}
+
+button:not(:disabled):active {
+  transform: translate(1px, 1px);
+}
+
+button:focus-visible {
+  outline: 2px solid #e5532d;
+  outline-offset: 2px;
+}
+
+.topbar-control {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.graph-toolbar-control,
+.graph-search-input,
+.simulate-control {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.graph-icon-button {
+  padding: 6px;
+}
+
+.app-shell {
+  background:
+    radial-gradient(ellipse at 50% -15%, rgba(22, 78, 99, 0.2), transparent 44rem),
+    #080f1c;
+}
+
+.metric-card {
+  min-width: 0;
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(15, 27, 44, 0.96), rgba(11, 20, 34, 0.96));
+  padding: 15px 16px;
+  box-shadow: 0 10px 30px rgba(2, 8, 23, 0.12);
+}
+
+.metric-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.metric-label svg {
+  width: 15px;
+  height: 15px;
+}
+
+.metric-value {
+  margin-top: 12px;
+  overflow: hidden;
+  color: #f1f5f9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(18px, 1.7vw, 22px);
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-note {
+  margin-top: 6px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-panel {
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 16px;
+  background: #0b1422;
+  box-shadow: 0 18px 48px rgba(2, 8, 23, 0.22);
+}
+
+.workspace-panel canvas {
+  max-width: 100%;
+}
+
+.main-nav-tab {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 13px;
+  line-height: 18px;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.main-nav-tab svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 640px) {
+  .metric-card {
+    padding: 12px;
+  }
+
+  .main-nav-tab {
+    padding-right: 10px;
+    padding-left: 10px;
+    font-size: 12px;
+  }
+}
+
+h1, h2, h3 { font-family: "Anybody", "Arial Narrow", Arial, sans-serif; font-stretch: 85%; letter-spacing: 0; }
+[class*="backdrop-blur"] { backdrop-filter: none !important; }
+body { background-image: repeating-radial-gradient(circle at 100% 0, transparent 0 58px, rgba(30,58,51,.07) 58px 59px); background-attachment: fixed; }

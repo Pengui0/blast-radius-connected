@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: blast-radius
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: GRAPH_BACKEND
+        value: sqlite
+      - key: AGENT_MODE
+        value: replay        # delete this line to use the live Gemini analyst
+      - key: DISABLE_SCAN
+        value: "1"           # public demo: presets only (shared graph)
+      - key: GEMINI_API_KEY
+        sync: false          # paste in the Render dashboard

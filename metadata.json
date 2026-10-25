@@ -1,0 +1,8 @@
+{
+  "name": "Blast Radius - Supply-Chain Security Triage",
+  "description": "Supply-chain security triage agent powered by FalkorDB graph algorithms and Cypher intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

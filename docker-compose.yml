@@ -1,0 +1,18 @@
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: blast-falkordb
+    ports:
+      - "127.0.0.1:6379:6379"   # Local-only database (Redis protocol)
+      - "127.0.0.1:3001:3000"   # Local-only FalkorDB Browser
+    volumes:
+      - falkordb_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  falkordb_data:

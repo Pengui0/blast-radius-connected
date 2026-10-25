@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blast Radius: see how far one bad package reaches</title>
+<meta name="description" content="Blast Radius maps npm dependencies and known advisories into a graph, then finds the fewest fixes that clear the most risk.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --lichen:#DADFD2; --mist:#EEF1E7; --spruce:#1E3A33; --ink:#12211D;
+  --rule:#8FA396; --flare:#E5532D;
+  --display:"Anybody","Arial Narrow",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{margin:0;background:var(--lichen);color:var(--ink);font:400 1.0625rem/1.6 var(--body)}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--flare);outline-offset:3px}
+.wrap{width:min(1120px,100% - 3rem);margin-inline:auto}
+
+/* header + hero */
+.hero{position:relative;overflow:hidden;background:var(--spruce);color:var(--mist);isolation:isolate}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:1.4rem 0}
+.mark{font:800 1.25rem/1 var(--display);font-stretch:75%;text-decoration:none;letter-spacing:.01em}
+.bar nav{display:flex;gap:1.6rem;font-size:.95rem}
+.bar nav a{text-decoration:none;border-bottom:1px solid transparent}
+.bar nav a:hover{border-color:var(--flare)}
+.bar nav{align-items:center}
+.bar nav a{padding:.6rem 0}
+.bar nav a.navbtn{padding:0 1.1rem;min-height:44px;display:inline-flex;align-items:center;font-weight:700;border:2px solid var(--mist);border-radius:2px;transition:background-color .12s ease,color .12s ease}
+.bar nav a.navbtn:hover{background:var(--mist);color:var(--spruce);border-color:var(--mist)}
+.rings{position:absolute;z-index:-1;right:-14%;top:50%;width:min(86vw,820px);transform:translateY(-46%);pointer-events:none}
+.copy{padding:clamp(3rem,9vw,7.5rem) 0 clamp(4rem,10vw,8rem);max-width:640px}
+h1{margin:0 0 1.6rem;font:800 clamp(2.9rem,8.2vw,6.2rem)/.94 var(--display);font-stretch:70%;letter-spacing:-.005em}
+.lede{font-size:1.2rem;max-width:34em;margin:0 0 2.2rem;color:#D6DCCF}
+.cta{display:flex;flex-wrap:wrap;gap:1rem 1.4rem;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 1.9rem;background:var(--flare);color:var(--ink);font:700 1.05rem/1 var(--body);text-decoration:none;border:2px solid var(--ink);border-radius:2px;cursor:pointer;box-shadow:5px 5px 0 var(--ink),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .12s ease,box-shadow .12s ease,background-color .12s ease,color .12s ease}
+.btn:hover{background:#F0633D;transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn:active{transform:translate(5px,5px);box-shadow:0 0 0 var(--ink)}
+.btn.ghost{background:transparent;color:var(--mist);border-color:var(--mist);box-shadow:5px 5px 0 rgba(238,241,231,.28)}
+.btn.ghost:hover{background:var(--mist);color:var(--spruce);box-shadow:2px 2px 0 rgba(238,241,231,.28)}
+.btn.ghost:active{box-shadow:0 0 0 transparent}
+
+/* questions */
+.q{position:relative;padding:clamp(4rem,9vw,7rem) 0;background:
+  repeating-radial-gradient(circle at 100% 0,transparent 0 58px,rgba(30,58,51,.09) 58px 59px),var(--lichen)}
+h2{margin:0 0 .6rem;font:800 clamp(2rem,4.6vw,3.3rem)/1 var(--display);font-stretch:75%}
+.sub{max-width:36em;margin:0 0 2.6rem}
+.rows{margin:0;padding:0;list-style:none;border-top:2px solid var(--ink)}
+.rows li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:.5rem 3rem;padding:1.5rem 0;border-bottom:1px solid var(--rule)}
+.rows h3{margin:0;font:700 1.45rem/1.15 var(--display);font-stretch:85%}
+.rows p{margin:0;max-width:34em}
+
+/* tiers */
+.tiers{background:var(--mist);padding:clamp(3.5rem,8vw,6rem) 0;border-top:6px solid var(--spruce)}
+.tiers dl{display:grid;grid-template-columns:repeat(3,1fr);margin:2rem 0 0;border:2px solid var(--ink)}
+.tiers div{padding:1.4rem 1.4rem 1.6rem}
+.tiers div+div{border-left:2px solid var(--ink)}
+.tiers div:nth-child(1){background:var(--mist)}
+.tiers div:nth-child(2){background:#D9DEC9}
+.tiers div:nth-child(3){background:var(--spruce);color:var(--mist)}
+.tiers dt{font:800 1.6rem/1 var(--display);font-stretch:80%;margin-bottom:.6rem}
+.tiers dd{margin:0}
+
+/* video */
+.video{background:var(--spruce);color:var(--mist);padding:clamp(3.5rem,8vw,6rem) 0}
+.frame{margin-top:2rem;aspect-ratio:16/9;background:var(--ink);box-shadow:10px 10px 0 rgba(229,83,45,.9)}
+.frame iframe{width:100%;height:100%;border:0;display:block}
+
+/* disclosure */
+.disc{padding:clamp(3.5rem,8vw,6rem) 0;background:
+  repeating-radial-gradient(circle at 0 100%,transparent 0 58px,rgba(30,58,51,.09) 58px 59px),var(--lichen)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem 4rem;margin-top:2rem}
+.cols h3{margin:0 0 .8rem;font:700 1.35rem/1.1 var(--display);font-stretch:85%;padding-bottom:.6rem;border-bottom:2px solid var(--ink)}
+.cols ul{margin:0;padding-left:1.1rem}
+.cols li{margin-bottom:.5rem}
+.note{margin-top:2rem;max-width:42em;padding-left:1rem;border-left:4px solid var(--flare)}
+
+.rows li{padding-inline:.9rem;margin-inline:-.9rem;transition:background-color .12s ease}
+.rows li:hover{background:rgba(238,241,231,.6)}
+.final{background:var(--spruce);color:var(--mist);padding:clamp(3.5rem,8vw,6rem) 0;border-top:6px solid var(--flare)}
+.final h2{max-width:14em;margin-bottom:1.8rem}
+.flinks{display:flex;gap:1.6rem}
+.flinks a{min-height:44px;display:inline-flex;align-items:center;text-underline-offset:.3em}
+footer{background:var(--ink);color:var(--mist);padding:2.2rem 0;font-size:.95rem}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem 2rem}
+footer p{margin:0;max-width:46em;color:#C4CCBD}
+[hidden]{display:none!important}
+
+@media (max-width:760px){
+  .bar nav{gap:1rem}
+  .rings{right:-45%;top:62%;width:130vw;opacity:.55}
+  .rows li,.cols{grid-template-columns:1fr}
+  .tiers dl{grid-template-columns:1fr}
+  .tiers div+div{border-left:0;border-top:2px solid var(--ink)}
+  .cta .btn{flex:1 1 100%}
+  .rows li{margin-inline:0}
+}
+@media (prefers-reduced-motion:reduce){.btn{transform:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg class="rings" viewBox="0 0 600 600" role="img" aria-label="Diagram: a vulnerable package at the centre, with rings of dependent packages spreading outward toward your app">
+    <defs>
+      <radialGradient id="halo"><stop offset="0" stop-color="#E5532D" stop-opacity=".75"/><stop offset="1" stop-color="#E5532D" stop-opacity="0"/></radialGradient>
+    </defs>
+    <circle cx="300" cy="300" r="290" fill="#EEF1E7" fill-opacity=".035" stroke="#8FA396" stroke-opacity=".45"/>
+    <circle cx="300" cy="300" r="205" fill="#EEF1E7" fill-opacity=".06" stroke="#8FA396" stroke-opacity=".55"/>
+    <circle cx="300" cy="300" r="125" fill="#EEF1E7" fill-opacity=".09" stroke="#8FA396" stroke-opacity=".7"/>
+    <circle cx="300" cy="300" r="58" fill="url(#halo)"/>
+    <g stroke="#8FA396" stroke-opacity=".8" stroke-width="1.5" fill="none">
+      <path d="M300 300 L392 232 M300 300 L214 218 M300 300 L226 396 M300 300 L388 380"/>
+      <path d="M392 232 L470 150 M392 232 L500 262 M214 218 L132 160 M214 218 L120 288 M226 396 L150 470 M388 380 L452 462 M388 380 L506 372"/>
+    </g>
+    <path d="M300 300 L392 232 L470 150" stroke="#E5532D" stroke-width="3.5" fill="none"/>
+    <g fill="#1E3A33" stroke="#EEF1E7" stroke-width="1.5">
+      <circle cx="392" cy="232" r="9"/><circle cx="214" cy="218" r="9"/><circle cx="226" cy="396" r="9"/><circle cx="388" cy="380" r="9"/>
+      <circle cx="500" cy="262" r="7"/><circle cx="132" cy="160" r="7"/><circle cx="120" cy="288" r="7"/><circle cx="150" cy="470" r="7"/><circle cx="452" cy="462" r="7"/><circle cx="506" cy="372" r="7"/>
+    </g>
+    <circle cx="470" cy="150" r="12" fill="#EEF1E7" stroke="#E5532D" stroke-width="3"/>
+    <circle cx="300" cy="300" r="14" fill="#E5532D"/>
+    <g font-family="Public Sans,sans-serif" font-size="15" font-weight="500" fill="#EEF1E7">
+      <text x="318" y="338">vulnerable package</text>
+      <text x="436" y="124">your app</text>
+    </g>
+  </svg>
+
+  <div class="wrap">
+    <div class="bar">
+      <a class="mark" href="#top" id="top">Blast Radius</a>
+      <nav aria-label="Primary">
+        <a class="navbtn" data-link="demo" href="#">Live demo</a>
+        <a href="#video" id="navVideo" hidden>Video</a>
+        <a data-link="github" href="#">Code</a>
+      </nav>
+    </div>
+    <div class="copy">
+      <h1>One bad package. How far does it reach?</h1>
+      <p class="lede">Blast Radius maps your npm dependencies and their known advisories into a graph, then shows the fewest fixes that clear the most risk and writes the patch for you.</p>
+      <div class="cta">
+        <a class="btn" data-link="demo" href="#">Open the live demo</a>
+        <a class="btn ghost" data-link="github" href="#">Read the code</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="q" aria-labelledby="qh">
+  <div class="wrap">
+    <h2 id="qh">Five questions every security scan leaves open</h2>
+    <p class="sub">A list of advisories tells you what is wrong. It doesn’t tell you what to fix first. Blast Radius answers these from the dependency graph.</p>
+    <ul class="rows">
+      <li><h3>How does this vulnerability reach my app?</h3><p>Traces the shortest dependency path from your app to the advisory, so you can see exactly which package pulled it in.</p></li>
+      <li><h3>Who is hurt if this package changes?</h3><p>Walks the graph backwards and lists every package that depends on it, directly or through others.</p></li>
+      <li><h3>Which package is the real problem?</h3><p>Ranks packages by how much of the graph depends on them, and finds the direct dependency that carries the most risk of its own.</p></li>
+      <li><h3>What are the fewest fixes that clear the most risk?</h3><p>Chooses upgrades one at a time by risk cleared. An advisory with no patched version is never counted as fixed.</p></li>
+      <li><h3>What happens if I apply them?</h3><p>Simulates the result without changing anything, then writes the <code>overrides</code> JSON and the issue text.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="tiers" aria-labelledby="th">
+  <div class="wrap">
+    <h2 id="th">Every fix is labelled by how risky it is to apply</h2>
+    <p class="sub">So the cheap, safe wins come first and the breaking changes are never a surprise.</p>
+    <dl>
+      <div><dt>Refresh</dt><dd>The fixed version already satisfies every package that requires it. Update and you’re done.</dd></div>
+      <div><dt>Override</dt><dd>Same major version, but a parent pins the old one. Needs an <code>overrides</code> entry.</dd></div>
+      <div><dt>Breaking</dt><dd>A major version bump, or no fix exists. Plan time to test it.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="video" id="video" hidden aria-labelledby="vh">
+  <div class="wrap">
+    <h2 id="vh">Watch it work</h2>
+    <div class="frame"><iframe id="vid" title="Blast Radius demo video" allowfullscreen loading="lazy"></iframe></div>
+  </div>
+</section>
+
+<section class="disc" aria-labelledby="dh">
+  <div class="wrap">
+    <h2 id="dh">What was built before Orcathon, and what wasn’t</h2>
+    <div class="cols">
+      <div>
+        <h3>Existing work, disclosed</h3>
+        <ul>
+          <li>The graph analysis: PageRank, betweenness, communities and the risk model.</li>
+          <li>The ten graph tools, the MCP server and the AI analyst.</li>
+          <li>The React interface, the API, and the deps.dev and OSV data pipeline.</li>
+          <li>Tests and CI. This project was first built for another hackathon.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Built during Orcathon</h3>
+        <ul id="newWork"><li>This list is updated on 25 October 2026 with the work done during the event.</li></ul>
+      </div>
+    </div>
+    <p class="note">The AI analyst runs live when a Gemini key is configured. Without one it replays recorded runs, and the interface labels them as a replay.</p>
+  </div>
+</section>
+<section class="final" aria-labelledby="fh">
+  <div class="wrap">
+    <h2 id="fh">Scan a real project and see its blast radius</h2>
+    <div class="cta">
+      <a class="btn" data-link="demo" href="#">Open the live demo</a>
+      <a class="btn ghost" data-link="github" href="#">Read the code</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Built with React, Vite, Express, FastAPI, NetworkX, SQLite, FalkorDB (optional), Gemini and MCP. Dependency data from deps.dev and advisories from OSV.</p>
+    <nav class="flinks" aria-label="Footer"><a data-link="demo" href="#">Live demo</a><a data-link="github" href="#">Code</a></nav>
+    <p id="team" hidden></p>
+  </div>
+</footer>
+
+<script>
+/* EDIT THESE before you deploy */
+var CONFIG = {
+  demoUrl: "/app/",                                       // where the app lives
+  githubUrl: "https://github.com/Pengui0/Blast-Radius",
+  videoEmbedUrl: "",                                    // e.g. https://www.youtube.com/embed/VIDEO_ID
+  team: "",                                             // e.g. "Team name: A, B, C"
+  newWork: []                                           // e.g. ["Paste a package.json to scan", "Plain-English summary"]
+};
+document.querySelectorAll("[data-link]").forEach(function(a){
+  a.href = a.dataset.link === "demo" ? CONFIG.demoUrl : CONFIG.githubUrl;
+});
+if (CONFIG.videoEmbedUrl) {
+  document.getElementById("vid").src = CONFIG.videoEmbedUrl;
+  document.getElementById("video").hidden = false;
+  document.getElementById("navVideo").hidden = false;
+}
+if (CONFIG.team) { var t = document.getElementById("team"); t.textContent = CONFIG.team; t.hidden = false; }
+if (CONFIG.newWork.length) {
+  var ul = document.getElementById("newWork"); ul.innerHTML = "";
+  CONFIG.newWork.forEach(function(s){ var li = document.createElement("li"); li.textContent = s; ul.appendChild(li); });
+}
+</script>
+</body>
+</html>
